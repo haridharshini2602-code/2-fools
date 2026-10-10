@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="ta">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tamil Meme Generator</title>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --card-color: #1e1e1e;
+            --accent-color: #ff4757;
+            --text-color: #ffffff;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h1 {
+            color: var(--accent-color);
+            margin-bottom: 20px;
+        }
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            max-width: 900px;
+            width: 100%;
+            justify-content: center;
+        }
+        .editor-panel {
+            background: var(--card-color);
+            padding: 20px;
+            border-radius: 10px;
+            flex: 1;
+            min-width: 300px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+        .preview-panel {
+            flex: 1;
+            min-width: 350px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        input[type="text"], input[type="file"] {
+            width: 100%;
+            padding: 10px;
+            box-sizing: border-box;
+            border-radius: 5px;
+            border: 1px solid #333;
+            background: #2a2a2a;
+            color: #fff;
+        }
+        .btn {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            width: 100%;
+            margin-top: 10px;
+            font-size: 1rem;
+            transition: background 0.2s;
+        }
+        .btn:hover {
+            background-color: #ff6b81;
+        }
+        canvas {
+            max-width: 100%;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+            background: #000;
+        }
+        .hint {
+            font-size: 0.8rem;
+            color: #aaa;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>தமிழ் Meme Generator 🎭</h1>
+
+    <div class="container">
+        <!-- Input controls -->
+        <div class="editor-panel">
+            <div class="input-group">
+                <label for="imageLoader">1. Upload Template Image (உள்ளூர் படம்)</label>
+                <input type="file" id="imageLoader" accept="image/*">
+                <div class="hint">Upload any Vadivelu, Santhanam, or custom reaction template.</div>
+            </div>
+
+            <div class="input-group">
+                <label for="topText">2. Top Text (மேல் வரி)</label>
+                <input type="text" id="topText" value="IT Companies: *Offers 2% Appraisal*">
+            </div>
+
+            <div class="input-group">
+                <label for="bottomText">3. Bottom Text (கீழ் வரி)</label>
+                <input type="text" id="bottomText" value="Me (Vadivelu): ஏப்பா.. இந்த காசுக்கு டீ, பன் கூட வராதுப்பா!">
+            </div>
+
+            <button class="btn" id="downloadBtn">Download Meme 📥</button>
+        </div>
+
+        <!-- Canvas rendering output -->
+        <div class="preview-panel">
+            <canvas id="memeCanvas" width="500" height="500"></canvas>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('memeCanvas');
+        const ctx = canvas.getContext('2d');
+        const imageLoader = document.getElementById('imageLoader');
+        const topTextInput = document.getElementById('topText');
+        const bottomTextInput = document.getElementById('bottomText');
+        const downloadBtn = document.getElementById('downloadBtn');
+
+        let activeImage = null;
+
+        // Initialize with a blank canvas colored placeholder
+        function drawPlaceholder() {
+            ctx.fillStyle = '#222';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.fillStyle = '#555';
+            ctx.font = '24px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('Upload a template to start template drawing', canvas.width / 2, canvas.height / 2);
+            
+            drawMemeText();
+        }
+
+        // Draw text onto the image viewport
+        function drawMemeText() {
+            ctx.font = 'bold 28px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillStyle = 'white';
+            ctx.strokeStyle = 'black';
+            ctx.lineWidth = 5;
+
+            // Render Top Text
+            ctx.textBaseline = 'top';
+            ctx.strokeText(topTextInput.value, canvas.width / 2, 20);
+            ctx.fillText(topTextInput.value, canvas.width / 2, 20);
+
+            // Render Bottom Text
+            ctx.textBaseline = 'bottom';
+            ctx.strokeText(bottomTextInput.value, canvas.width / 2, canvas.height - 20);
+            ctx.fillText(bottomTextInput.value, canvas.width / 2, canvas.height - 20);
+        }
+
+        // Handle updating canvas layout
+        function updateMeme() {
+            if (activeImage) {
+                ctx.drawImage(activeImage, 0, 0, canvas.width, canvas.height);
+                drawMemeText();
+            } else {
+                drawPlaceholder();
+            }
+        }
+
+        // Handle image uploads locally via browser FileReader
+        imageLoader.addEventListener('change', (e) => {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const img = new Image();
+                img.onload = function() {
+                    activeImage = img;
+                    updateMeme();
+                }
+                img.src = event.target.result;
+            }
+            if(e.target.files[0]) {
+                reader.readAsDataURL(e.target.files[0]);
+            }
+        });
+
+        // Event listeners for text input modification triggers
+        topTextInput.addEventListener('input', updateMeme);
+        bottomTextInput.addEventListener('input', updateMeme);
+
+        // Download generated canvas asset securely locally
+        downloadBtn.addEventListener('click', () => {
+            const image = canvas.toDataURL("image/png").replace("image/png", "image/octet-stream");
+            const link = document.createElement('a');
+            link.download = 'tamil-meme.png';
+            link.href = image;
+            link.click();
+        });
+
+        // Initialize on boot
+        drawPlaceholder();
+    </script>
+</body>
+</html>
